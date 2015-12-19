@@ -1,4 +1,15 @@
 {
+    "name": "miaokuan/wee",
+    "description": "a high available framework for php",
+    "keywords": ["wee", "php", "framework"],
+    "homepage": "http://github.com/miaokuan/wee",
+    "type": "library",
+    "license": "MIT",
+    "authors": [{
+        "name": "miaokuan",
+        "email": "eyou80@gmail.com",
+        "homepage":"http://github.com/miaokuan/"
+    }],
     "require": {
         "miaokuan/haf":"*"
     },
@@ -9,10 +20,9 @@
     },
     "autoload-dev":{
         "psr-4":{
-           "Wee\\Test\\":"tests/Wee/Test"
+            "Wee\\Test\\":"tests/Wee/Test"
         }
     },
-    "bin":["bin/run"],
     "scripts":{
         "test":"phpunit"
     }
