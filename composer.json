@@ -1,0 +1,19 @@
+{
+    "require": {
+        "miaokuan/haf":"*"
+    },
+    "autoload":{
+        "psr-4":{
+            "Wee\\":"src/Wee"
+        }
+    },
+    "autoload-dev":{
+        "psr-4":{
+           "Wee\\Test\\":"tests/Wee/Test"
+        }
+    },
+    "bin":["bin/run"],
+    "scripts":{
+        "test":"phpunit"
+    }
+}
