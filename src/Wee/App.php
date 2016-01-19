@@ -17,6 +17,8 @@ class App extends Front
     protected $pidfile = '';
 
     protected $namespace = 'AppController\\';
+    
+    protected $sign = '';
 
     /**
      * concurrent num
@@ -43,10 +45,11 @@ class App extends Front
         }
 
         $this->mypid = getmypid();
+        $mypid = $this->mypid;
         $this->bootstrap();
+        
         $app = $this->request->getController();
         $action = $this->request->getAction();
-        $mypid = $this->mypid;
         Log::info("Begin to execute. [app:$app action:$action pid:$mypid]");
 
         parent::dispatch($this->request);
@@ -67,6 +70,7 @@ class App extends Front
         if (!empty($argv[1])) {
             $this->request->setController($argv[1]);
         }
+        $this->sign = str_replace('\\', '_', $this->request->getController());
 
         // action
         if (!empty($argv[2])) {
@@ -98,7 +102,7 @@ class App extends Front
 
     protected function initpid()
     {
-        $pidfile = VAR_DIR . '/pid/' . $this->request->getController() . '_' . $this->mypid . '.pid';
+        $pidfile = VAR_DIR . '/pid/' . $this->sign . '_' . $this->mypid . '.pid';
         if (file_put_contents($pidfile, $this->mypid)) {
             $this->pidfile = $pidfile;
         } else {
@@ -106,7 +110,7 @@ class App extends Front
             exit;
         }
 
-        $pidfiles = glob(VAR_DIR . '/pid/' . $this->request->getController() . "*.pid");
+        $pidfiles = glob(VAR_DIR . '/pid/' . $this->sign . "*.pid");
         if (is_array($pidfiles) && (count($pidfiles) > $this->concurrent)) {
             $text = "pid file(" . $pidfiles[0] . ") existed.";
             Log::fatal($text);
@@ -116,7 +120,7 @@ class App extends Front
 
     protected function initlog()
     {
-        $logfile = VAR_DIR . '/log/' . str_replace('\\', '_', $this->request->getController()) . '_' . $this->mypid . '.log.' . date('Ymd');
+        $logfile = VAR_DIR . '/log/' . $this->sign . '_' . $this->mypid . '.log.' . date('Ymd');
         Log::logfile($logfile);
         Log::level(Log::INFO);
     }
