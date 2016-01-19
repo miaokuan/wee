@@ -10,10 +10,7 @@
         "email": "eyou80@gmail.com",
         "homepage": "http://github.com/miaokuan/"
     }],
-    "repositories": [{
-        "type": "vcs",
-        "url": "https://github.com/miaokuan/haf"
-    }],
+    "minimum-stability": "dev",
     "require": {
         "miaokuan/haf": "dev-master"
     },
