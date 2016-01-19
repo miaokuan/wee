@@ -7,7 +7,7 @@ namespace Wee;
 
 class UA
 {
-    static $_config = null;
+    static $resource = null;
 
     public $agent = '';
 
@@ -23,14 +23,14 @@ class UA
 
     public static function load()
     {
-        if (null === self::$_config) {
-            self::$_config = include __DIR__ . '/ua/resource.php';
+        if (null === self::$resource) {
+            self::$resource = include __DIR__ . '/ua/resource.php';
         }
     }
 
     public static function factory($agent = null)
     {
-        return new self($agent);
+        return new static($agent);
     }
 
     public function __construct($agent = null)
@@ -59,8 +59,8 @@ class UA
 
     protected function _parsePlatform()
     {
-        if (is_array(self::$_config['platforms']) && count(self::$_config['platforms'])) {
-            foreach (self::$_config['platforms'] as $key => $val) {
+        if (is_array(self::$resource['platforms']) && count(self::$resource['platforms'])) {
+            foreach (self::$resource['platforms'] as $key => $val) {
                 if (false !== (stripos($this->agent, $key))) {
                     $this->platform = $val;
                     return true;
@@ -72,8 +72,8 @@ class UA
 
     protected function _parseBrowser()
     {
-        if (is_array(self::$_config['browsers']) && count(self::$_config['browsers'])) {
-            foreach (self::$_config['browsers'] as $key => $val) {
+        if (is_array(self::$resource['browsers']) && count(self::$resource['browsers'])) {
+            foreach (self::$resource['browsers'] as $key => $val) {
                 if (preg_match("|" . preg_quote($key) . ".*?([0-9\.]+)|i", $this->agent, $match)) {
                     $this->is_browser = true;
                     $this->version = $match[1];
@@ -89,8 +89,8 @@ class UA
 
     protected function _parseMobile()
     {
-        if (is_array(self::$_config['mobiles']) && count(self::$_config['mobiles'])) {
-            foreach (self::$_config['mobiles'] as $key => $val) {
+        if (is_array(self::$resource['mobiles']) && count(self::$resource['mobiles'])) {
+            foreach (self::$resource['mobiles'] as $key => $val) {
                 if (false !== (stripos($this->agent, $key))) {
                     $this->is_mobile = true;
                     $this->mobile = $val;
@@ -104,8 +104,8 @@ class UA
 
     protected function _parseRobot()
     {
-        if (is_array(self::$_config['robots']) && count(self::$_config['robots'])) {
-            foreach (self::$_config['robots'] as $key => $val) {
+        if (is_array(self::$resource['robots']) && count(self::$resource['robots'])) {
+            foreach (self::$resource['robots'] as $key => $val) {
                 if (false !== (stripos($this->agent, $key))) {
                     $this->is_robot = true;
                     $this->robot = $val;

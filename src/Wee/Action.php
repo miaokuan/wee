@@ -5,29 +5,29 @@
 
 namespace Wee;
 
+use Haf\Action as HafAction;
 use Haf\Response;
+use Wee\Str;
 
-class Action extends \Yaf_Controller_Abstract
+abstract class Action extends HafAction
 {
+
     public function json($data)
     {
-        Yaf_Dispatcher::getInstance()->disableView();
-
-        $callback = $this->getRequest()->get('callback');
+        $callback = $this->request->get('callback');
         $callback = preg_replace('/[^a-z0-9_]/i', '', $callback);
 
         // jsonp
         if ('' != $callback) {
             header('Content-Type: application/javascript');
             echo $callback . '(' . json_encode($data) . ');';
-
+            return true;
+        } else {
+            // json
+            header('Content-type: application/json');
+            echo json_encode($data);
             return true;
         }
-
-        // json
-        header('Content-type: application/json');
-        echo json_encode($data);
-        return true;
     }
 
     /**
@@ -40,29 +40,25 @@ class Action extends \Yaf_Controller_Abstract
      * 5 列内容如存在半角引号（即"）则应替换成半角双引号（""）转义。
      * 6 文件读写时引号，逗号操作规则互逆。
      * 7 内码格式不限，可为ASCII、Unicode或者其他。
-     */
-
-    /**
+     *
      * output csv format data
      * @param null $filename
      * @return bool
      */
     public function csv($filename = null)
     {
-        Yaf_Dispatcher::getInstance()->disableView();
-        $this->initView();
+        $view = $this->initView();
+        $template = $this->template(null, null, '.csv');
+        $content = $view->render($template, true);
 
-        $c = $this->render();
-        $c = mb_convert_encoding($c, 'gbk', 'utf-8');
+        $content = mb_convert_encoding($content, 'gbk', 'utf-8');
 
         if (empty($filename)) {
             $filename = Str::rand(8) . '.csv';
         }
 
         Response::download($filename);
-        echo $c;
+        echo $content;
         return true;
     }
-
 }
-

@@ -39,7 +39,7 @@ class Captcha
             }
 
             //反色
-            $rnd = rand(0, $this->text_num - 1);
+            $rnd = rand(1, $this->text_num - 1);
             if (($i % $this->text_num) == $rnd) {
                 imagefilledellipse($im, $this->im_x * 0.05 + $i * $size * 1.3 + $size / 2, $ypos / 2,
                     $size * 1.2, $this->im_y * 1.1, $text_c);
@@ -55,7 +55,7 @@ class Captcha
         header("Content-type: image/png");
         ImagePNG($im);
         ImageDestroy($im);
-        echo '= @author:miaokuan';
+        echo '= ' . base64_encode('@author:miaokuan<eyou80@gmail.com>');
     }
 
 }

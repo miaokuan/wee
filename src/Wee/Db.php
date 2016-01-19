@@ -8,6 +8,9 @@
 
 namespace Wee;
 
+use Wee\Config;
+use Wee\Log;
+
 class Db
 {
     const T_NUM = 'n';
@@ -34,6 +37,8 @@ class Db
 
     protected $mysqli;
 
+    protected $profile = false;
+
     protected $transaction = 0;
     protected $errno = 0;
     protected $error = '';
@@ -42,14 +47,13 @@ class Db
     protected $lastCost = 0;
     protected $totalCost = 0;
 
-    static $pool = array();
+    public static $pool = array();
 
     public static function instance($database)
     {
         if (empty(self::$pool[$database])) {
-            $config = Config::load('db');
-            $config['database'] = $database;
-            self::$pool[$database] = new self($config);
+            $config = Config::load('db', $database);
+            self::$pool[$database] = new static($config);
         }
 
         return self::$pool[$database];
@@ -103,6 +107,13 @@ class Db
         return $this->mysqli->options($option, $value);
     }
 
+    public function profile($profile = true)
+    {
+        $now = $this->profile;
+        $this->profile = $profile;
+        return $now;
+    }
+
     /**
      * Returns FALSE on failure. For successful SELECT, SHOW, DESCRIBE or EXPLAIN queries mysqli_query() will return a MySQLi_Result object. For other successful queries mysqli_query() will return TRUE.
      */
@@ -135,7 +146,9 @@ class Db
         $this->lastCost = intval(microtime(true) * 1000000) - $begin;
         $this->totalCost += $this->lastCost;
 
-        Log::debug('query success. [cost: ' . $this->lastCost . 'us] [sql: ' . $sql . ']');
+        if ($this->profile) {
+            Log::debug('query success. [cost: ' . $this->lastCost . 'us] [sql: ' . $sql . ']');
+        }
 
         return $res;
     }

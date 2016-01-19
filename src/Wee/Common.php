@@ -5,6 +5,8 @@
 
 namespace Wee;
 
+use Haf\Response;
+
 class Common
 {
     protected static $config = array(
@@ -55,7 +57,7 @@ class Common
         /**
          * error handler
          */
-        // set_error_handler(array('Wee\\Common', 'errorHandler'));
+        set_error_handler(array('Wee\\Common', 'errorHandler'));
     }
 
     public static function stripslashes($value)
@@ -83,56 +85,55 @@ class Common
         }
     }
 
-    /**
-     * throw exceptions based on E_* error types
-     */
-    public static function errorHandler($errno, $errstr, $errfile, $errline)
+    public static function errorHandler($errno, $errstr, $errfile, $errline, $errcontext)
     {
-        // This error code is not included in error_reporting
-        if (!(error_reporting() & $errno)) {
-            return false;
+        $l = error_reporting();
+        if ($l & $errno) {
+
+            $exit = false;
+            switch ($errno) {
+                case E_USER_ERROR:
+                    $type = 'Fatal Error';
+                    $exit = true;
+                    break;
+                case E_USER_WARNING:
+                case E_WARNING:
+                    $type = 'Warning';
+                    break;
+                case E_USER_NOTICE:
+                case E_NOTICE:
+                case @E_STRICT:
+                    $type = 'Notice';
+                    break;
+                case @E_RECOVERABLE_ERROR:
+                    $type = 'Catchable';
+                    break;
+                default:
+                    $type = 'Unknown Error';
+                    $exit = true;
+                    break;
+            }
+
+            $exception = new \ErrorException($type . ': ' . $errstr, 0, $errno, $errfile, $errline);
+
+            if ($exit) {
+                exceptionHandler($exception);
+                exit(1);
+            } else {
+                throw $exception;
+            }
+
         }
-
-        throw new \ErrorException($errstr, 0, $errno, $errfile, $errline);
-
-        // switch ($errno) {
-        //     case E_ERROR:
-        //         throw new ErrorException($errstr, 0, $errno, $errfile, $errline);
-        //     case E_WARNING:
-        //         throw new WarningException($errstr, 0, $errno, $errfile, $errline);
-        //     case E_PARSE:
-        //         throw new ParseException($errstr, 0, $errno, $errfile, $errline);
-        //     case E_NOTICE:
-        //         throw new NoticeException($errstr, 0, $errno, $errfile, $errline);
-        //     case E_CORE_ERROR:
-        //         throw new CoreErrorException($errstr, 0, $errno, $errfile, $errline);
-        //     case E_CORE_WARNING:
-        //         throw new CoreWarningException($errstr, 0, $errno, $errfile, $errline);
-        //     case E_COMPILE_ERROR:
-        //         throw new CompileErrorException($errstr, 0, $errno, $errfile, $errline);
-        //     case E_COMPILE_WARNING:
-        //         throw new CoreWarningException($errstr, 0, $errno, $errfile, $errline);
-        //     case E_USER_ERROR:
-        //         throw new UserErrorException($errstr, 0, $errno, $errfile, $errline);
-        //     case E_USER_WARNING:
-        //         throw new UserWarningException($errstr, 0, $errno, $errfile, $errline);
-        //     case E_USER_NOTICE:
-        //         throw new UserNoticeException($errstr, 0, $errno, $errfile, $errline);
-        //     case E_STRICT:
-        //         throw new StrictException($errstr, 0, $errno, $errfile, $errline);
-        //     case E_RECOVERABLE_ERROR:
-        //         throw new RecoverableErrorException($errstr, 0, $errno, $errfile, $errline);
-        //     case E_DEPRECATED:
-        //         throw new DeprecatedException($errstr, 0, $errno, $errfile, $errline);
-        //     case E_USER_DEPRECATED:
-        //         throw new UserDeprecatedException($errstr, 0, $errno, $errfile, $errline);
-        // }
+        return false;
     }
 
-    public static function exceptionHandler(\Exception $e)
+    public static function exceptionHandler($e)
     {
-        if (self::$config['exception']) {
 
+        $log = $e->getMessage() . "\n" . $e->getTraceAsString() . "\n";
+        Log::Warning('Unhandled Exception' . $log);
+
+        if (self::$config['exception']) {
             $code = $e->getCode();
             echo "Code:$code\n";
 
@@ -144,15 +145,16 @@ class Common
 
             echo "Message:\n";
             echo $e->getMessage(), "\n";
+            echo $e->getTraceAsString(), "\n";
 
-            var_dump($e->getTrace());
+            // var_dump($e->getTrace());
 
             echo "\n\n";
         } else {
             self::error($e);
         }
 
-        exit(1);
+        // exit(1);
     }
 
     public static function error($e)
@@ -171,7 +173,7 @@ class Common
                 $message = 'Internal Server Error!';
                 break;
             case 404:
-                $message = "Not Found! <!--$code-->";
+                // $message = "Not Found! <!--$code-->";
                 $code = 404;
                 break;
             case 403:
@@ -185,7 +187,7 @@ class Common
         ob_start();
         header('Content-Type: text/html; charset=utf-8', true);
         if (is_numeric($code) && $code > 200) {
-            Http_Response::setStatus($code);
+            Response::setStatus($code);
         }
         $message = nl2br($message);
         print <<<EOF

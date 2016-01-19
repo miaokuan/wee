@@ -5,17 +5,18 @@
 
 namespace Wee;
 
-class App
+use Haf\Front;
+use Haf\Request;
+use Wee\Log;
+use Wee\Timer;
+
+class App extends Front
 {
     protected $mypid = 0;
 
     protected $pidfile = '';
 
-    protected $module = '';
-
-    protected $app = 'demo';
-
-    protected $action = 'run';
+    protected $namespace = 'AppController\\';
 
     /**
      * concurrent num
@@ -29,21 +30,26 @@ class App
 
     public $params = array();
 
-    public function __construct($module = '')
+    protected $request;
+
+    public function dispatch(Request $request = null)
     {
-        if (!empty($module)) {
-            $this->module = $module;
+        Timer::start('run');
+
+        if (null === $request) {
+            $this->request = Request::singleton();
+        } else {
+            $this->request = $request;
         }
 
         $this->mypid = getmypid();
         $this->bootstrap();
-    }
+        $app = $this->request->getController();
+        $action = $this->request->getAction();
+        $mypid = $this->mypid;
+        Log::info("Begin to execute. [app:$app action:$action pid:$mypid]");
 
-    public function run()
-    {
-        Timer::start('run');
-
-        $this->doRun();
+        parent::dispatch($this->request);
 
         Timer::end('run');
         $time = Timer::cal('run');
@@ -57,20 +63,20 @@ class App
     {
         global $argv;
 
-        // app
+        // controller
         if (!empty($argv[1])) {
-            $this->app = $argv[1];
+            $this->request->setController($argv[1]);
         }
 
         // action
         if (!empty($argv[2])) {
-            $this->action = $argv[2];
+            $this->request->setAction($argv[2]);
         }
 
         // params
         if (!empty($argv[3])) {
             parse_str($argv[3], $params);
-            $this->params = $params;
+            $this->request->setParams($params);
         }
 
         // concurrent
@@ -87,11 +93,12 @@ class App
 
         // pidfile
         $this->initpid();
+
     }
 
     protected function initpid()
     {
-        $pidfile = VAR_DIR . '/pid/' . $this->app . '_' . $this->mypid . '.pid';
+        $pidfile = VAR_DIR . '/pid/' . $this->request->getController() . '_' . $this->mypid . '.pid';
         if (file_put_contents($pidfile, $this->mypid)) {
             $this->pidfile = $pidfile;
         } else {
@@ -99,7 +106,7 @@ class App
             exit;
         }
 
-        $pidfiles = glob(VAR_DIR . '/pid/' . $this->app . "*.pid");
+        $pidfiles = glob(VAR_DIR . '/pid/' . $this->request->getController() . "*.pid");
         if (is_array($pidfiles) && (count($pidfiles) > $this->concurrent)) {
             $text = "pid file(" . $pidfiles[0] . ") existed.";
             Log::fatal($text);
@@ -109,81 +116,9 @@ class App
 
     protected function initlog()
     {
-        $logfile = VAR_DIR . '/log/' . $this->app . '_' . $this->mypid . '.log';
+        $logfile = VAR_DIR . '/log/' . str_replace('\\', '_', $this->request->getController()) . '_' . $this->mypid . '.log.' . date('Ymd');
         Log::logfile($logfile);
         Log::level(Log::INFO);
-    }
-
-    public function doRun()
-    {
-        $pid = $this->mypid;
-        $app = $this->app;
-        $action = $this->action . 'Action';
-        Log::info("Begin to execute. [app:$app action:$action pid:$pid]");
-
-        $class = $this->format($app);
-        if (!class_exists($class)) {
-            Log::fatal("Failed to find class:$class");
-            return;
-        }
-
-        $obj = new $class($this->params);
-        if (!method_exists($obj, $action)) {
-            Log::fatal("Failed to find method:$action");
-            return;
-        }
-
-        Log::info("Calling method[$action] for $app.");
-        $log = array();
-        $debug = $obj->$action($log);
-
-        // log
-        $this->loger($log);
-
-        // debug
-        $this->debuger($debug);
-
-        Log::info("Execute finished. [app:$app action:$action process id:$pid]");
-    }
-
-    protected function debuger($debug)
-    {
-        if (!is_scalar($debug)) {
-            $debug = explode("\n", trim(print_r($debug, true)));
-        } elseif (strlen($debug) > 256) {
-            $debug = substr($debug, 0, 256) . '...(truncated)';
-        }
-
-        if (is_array($debug)) {
-            foreach ($debug as $ln) {
-                Log::debug($ln);
-            }
-        } else {
-            Log::debug($debug);
-        }
-    }
-
-    protected function loger($log)
-    {
-        if (empty($log)) {
-            return;
-        }
-
-        foreach ($log as $l) {
-            if (!is_scalar($l)) {
-                $l = explode("\n", trim(print_r($l, true)));
-            } elseif (strlen($l) > 256) {
-                $l = substr($l, 0, 256) . '...(truncated)';
-            }
-
-            if (is_array($l)) {
-                foreach ($l as $ln) {
-                    Log::info($ln);
-                }
-            } else {
-                Log::info($l);
-            }
-        }
     }
 
     public function __destruct()
@@ -193,18 +128,6 @@ class App
                 Log::warning("Could not delete pid file " . $this->pidfile);
             }
         }
-    }
-
-    protected function format($app)
-    {
-        $arr = explode('.', $app);
-        foreach ($arr as $key => $word) {
-            $word = ucfirst(strtolower($word));
-            $arr[$key] = $word;
-        }
-        $class = ucfirst(strtolower($this->module)) .
-        '\\' . implode('\\', $arr);
-        return $class;
     }
 
 }

@@ -25,7 +25,35 @@ class Log
      */
     protected $level = 200;
 
-    protected function log($message, $level = self::INFO)
+    public static function instance()
+    {
+        if (null === self::$instance) {
+            self::$instance = new static();
+        }
+        return self::$instance;
+    }
+
+    public static function level($level = null)
+    {
+        if (null === $level) {
+            return self::instance()->level;
+        } else {
+            self::instance()->level = intval($level);
+        }
+    }
+
+    public static function logfile($logfile)
+    {
+        self::instance()->logfile = $logfile;
+    }
+
+    protected function __clone()
+    {}
+
+    protected function __construct()
+    {}
+
+    protected function write($message, $level = self::INFO)
     {
         switch ($level) {
             case self::DEBUG:
@@ -73,52 +101,27 @@ class Log
 
     public static function debug($message)
     {
-        self::instance()->log($message, self::DEBUG);
+        self::instance()->write($message, self::DEBUG);
     }
 
     public static function info($message)
     {
-        self::instance()->log($message, self::INFO);
+        self::instance()->write($message, self::INFO);
     }
 
     public static function notice($message)
     {
-        self::instance()->log($message, self::NOTICE);
+        self::instance()->write($message, self::NOTICE);
     }
 
     public static function warning($message)
     {
-        self::instance()->log($message, self::WARNING);
+        self::instance()->write($message, self::WARNING);
     }
 
     public static function fatal($message)
     {
-        self::instance()->log($message, self::FATAL);
-    }
-
-    public static function instance()
-    {
-        if (null === self::$instance) {
-            self::$instance = new self();
-        }
-        return self::$instance;
-    }
-
-    protected function __clone()
-    {}
-
-    public static function level($level = null)
-    {
-        if (null === $level) {
-            return self::instance()->level;
-        } else {
-            self::instance()->level = intval($level);
-        }
-    }
-
-    public static function logfile($logfile)
-    {
-        self::instance()->logfile = $logfile;
+        self::instance()->write($message, self::FATAL);
     }
 
 }

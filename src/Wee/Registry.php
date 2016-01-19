@@ -8,36 +8,36 @@ namespace Wee;
 
 class Registry
 {
-    static $_registry = array();
+    protected static $registry = array();
 
     public static function get($key = null)
     {
         if (null === $key) {
-            return self::$_registry;
+            return self::$registry;
         }
 
         $key = (string) $key;
-        return isset(self::$_registry[$key]) ? self::$_registry[$key] : null;
+        return isset(self::$registry[$key]) ? self::$registry[$key] : null;
     }
 
     public static function set($key, $value)
     {
         $key = (string) $key;
-        self::$_registry[$key] = $value;
+        self::$registry[$key] = $value;
         return true;
     }
 
     public static function remove($key)
     {
         $key = (string) $key;
-        if (isset(self::$_registry[$key])) {
-            unset(self::$_registry[$key]);
+        if (isset(self::$registry[$key])) {
+            unset(self::$registry[$key]);
         }
         return true;
     }
 
     public static function clear()
     {
-        self::$_register = array();
+        self::$registry = array();
     }
 }

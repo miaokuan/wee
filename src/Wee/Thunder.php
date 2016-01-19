@@ -5,6 +5,9 @@
 
 namespace Wee;
 
+use Wee\Filter;
+use Wee\Str;
+
 class Thunder
 {
 

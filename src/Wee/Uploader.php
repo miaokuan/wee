@@ -5,6 +5,9 @@
 
 namespace Wee;
 
+use Wee\Exception;
+use Wee\Str;
+
 class Uploader
 {
     /**
@@ -59,7 +62,7 @@ class Uploader
 
     public function __construct($name, array $descriptionArr = array())
     {
-        $this->fileDir = Common::$config['file_dir'];
+        $this->fileDir = VAR_DIR . '/upload';
 
         $noFileArr = array();
         if (is_array($_FILES[$name])) {
@@ -88,7 +91,7 @@ class Uploader
 
     public function upload()
     {
-        $this->savePath = date('Ym');
+        $this->savePath = '/' . date('Ym');
 
         if (!is_dir($this->fileDir . $this->savePath) &&
             !mkdir($this->fileDir . $this->savePath)) {
@@ -110,7 +113,7 @@ class Uploader
                 continue;
             }
 
-            $suffix = Common::fileSuffix($file['name']);
+            $suffix = Str::suffix($file['name']);
             $isImage = in_array($suffix, $this->allowImageExtArr);
 
             if ($this->onlyAllowImage && !$isImage) {

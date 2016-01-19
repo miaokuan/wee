@@ -6,6 +6,8 @@
 
 namespace Wee;
 
+use Wee\Arr;
+
 class Str
 {
     public static function getQuery($refer)
@@ -109,7 +111,7 @@ class Str
         if (false === $spos) {
             return '';
         }
-        $spos = $spos + strlen($start);
+        $spos = intval($spos + strlen($start));
         $epos = strpos($str, $end, $spos);
         if (false === $epos) {
             return '';
@@ -118,11 +120,11 @@ class Str
         return $str;
     }
 
-    public static function cut($str, $start, $end, $retain_start = false, $retain_end = false, $fix = '')
+    public static function cut($str, $start, $end, $retain_start = false, $retain_end = true, $fix = '')
     {
         $result = '';
-        $startpos = stripos($str, $start);
-        $endpos = stripos($str, $end, $startpos + strlen($start));
+        $startpos = strpos($str, $start);
+        $endpos = strpos($str, $end, intval($startpos + strlen($start)));
         if ($startpos === false || $endpos === false) {
             return $str;
         }
@@ -160,6 +162,37 @@ class Str
             $str = join("", array_splice($m[0], $start, $length));
             return ($length < count($m[0])) ? $str . $strimmarker : $str;
         }
+    }
+
+    public static function text($str)
+    {
+        // $str = preg_replace("#<script(.*?)>(.*?)</script>#is", "", $str);
+        // $str = preg_replace("#<style(.*?)>(.*?)</style>#is", "", $str);
+        // $search = ['</', '</', '&nbsp;', '　'];
+        // $replace = ["\n</", "\n</", ' '];
+        // $str = str_replace($search, $replace, $str);
+
+        $search = array('@<script[^>]*?>.*?</script>@si', // Strip out javascript
+            '@<style[^>]*?>.*?</style>@siU', // Strip style tags properly
+            '@<[\/\!]*?[^<>]*?>@si', // Strip out HTML tags
+            '@<![\s\S]*?–[ \t\n\r]*>@', // Strip multi-line comments including CDATA
+            '/\s{2,}/',
+        );
+
+        $str = preg_replace($search, "\n", html_entity_decode($str));
+
+        $pat[0] = "/^\s+/";
+        $pat[2] = "/\s+\$/";
+        $rep[0] = "";
+        $rep[2] = " ";
+
+        $str = preg_replace($pat, $rep, trim($str));
+        // $str = strip_tags($str);
+        // $str = preg_replace('/[\t  ]+/', ' ', $str);
+        // $str = preg_replace('/[\n\r]+/', "\n", $str);
+
+        $str = str_replace('　', ' ', $str);
+        return $str;
     }
 
     public static function strimwidth($str, $width, $strimmarker = '...', $start = 0)

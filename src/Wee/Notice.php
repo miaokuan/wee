@@ -11,7 +11,7 @@ class Notice
     const __WARNING = 'warning';
     const __ERROR = 'warning';
 
-    static $_key = '__notice__';
+    public static $_key = 'haf_notice';
 
     /**
      * set notice

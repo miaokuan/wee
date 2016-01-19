@@ -8,17 +8,17 @@ namespace Wee;
 class Arr
 {
 
-    public static function shuffle($list)
+    public static function shuffle($arr)
     {
-        if (!is_array($list)) {
-            return $list;
+        if (!is_array($arr)) {
+            return $arr;
         }
 
-        $keys = array_keys($list);
+        $keys = array_keys($arr);
         shuffle($keys);
         $random = array();
         foreach ($keys as $key) {
-            $random[$key] = $list[$key];
+            $random[$key] = $arr[$key];
         }
 
         return $random;

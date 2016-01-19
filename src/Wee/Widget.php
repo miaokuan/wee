@@ -5,6 +5,8 @@
 
 namespace Wee;
 
+use Wee\Db;
+
 abstract class Widget
 {
     public $database = '';
@@ -41,31 +43,93 @@ abstract class Widget
     }
 
     /**
-     * struct insert
+     * insert array struct
      */
     public function in(array $fields, array $bind)
     {
-        $insert = array();
-        foreach ($fields as $field => $default) {
-            $insert[$field] = (isset($bind[$field])) ? $bind[$field] : $default;
-        }
-
-        return $insert;
-    }
-
-    /**
-     * struct update
-     */
-    public function up(array $fields, array $bind)
-    {
-        $update = array();
-        foreach ($fields as $field => $default) {
+        $data = array();
+        foreach ($fields as $field => $val) {
             if (isset($bind[$field])) {
-                $update[$field] = $bind[$field];
+                $data[$field] = $bind[$field];
+            } elseif (null !== $val['default']) {
+                $data[$field] = $val['default'];
             }
         }
 
-        return $update;
+        return $data;
+    }
+
+    /**
+     * update array struct
+     */
+    public function up(array $fields, array $bind)
+    {
+        $data = array();
+        foreach ($fields as $field => $default) {
+            if (isset($bind[$field])) {
+                $data[$field] = $bind[$field];
+            }
+        }
+
+        return $data;
+    }
+
+    /**
+     * replace
+     */
+    public function create(array $bind, $method = 'REPLACE')
+    {
+        $data = $this->in($this->fields, $bind);
+
+        if ($method == 'REPLACE') {
+            $this->db->replace($this->table, $data);
+        } else {
+            $this->db->insert($this->table, $data);
+        }
+
+        return $this->db->insert_id;
+    }
+
+    /**
+     * delete
+     */
+    public function destory($id)
+    {
+        $conds = ['id=' => $id];
+        $id = $this->db->delete($this->table, $conds);
+        return $id;
+    }
+
+    /**
+     * update
+     */
+    public function store($id, array $bind)
+    {
+        $conds = ['id=' => $id];
+        $data = $this->up($this->fields, $bind);
+        return $this->db->update($this->table, $data, $conds);
+    }
+
+    /**
+     * select
+     */
+    public function get($id)
+    {
+        $conds = ['id=' => $id];
+        $row = $this->db->selectRow($this->table, '*', $conds);
+        return $row;
+    }
+
+    public function find($conds = null, $limit = 20, $offset = 0, $desc = true)
+    {
+        $fields = ['*'];
+        $appends = '';
+        if ($desc) {
+            $appends .= " order by id desc";
+        }
+        $appends .= " limit $limit offset $offset";
+        $rows = $this->db->select($this->table, $fields, $conds, null, $appends);
+        return $rows;
     }
 
 }
