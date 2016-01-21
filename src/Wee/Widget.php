@@ -120,6 +120,17 @@ abstract class Widget
         return $row;
     }
 
+    public function field($id, $field)
+    {
+        if (!array_key_exists($field, $this->fields)) {
+            return null;
+        }
+
+        $conds = ['id=' => $id];
+        $data = $this->db->selectField($this->table, $field, $conds);
+        return $data;
+    }
+
     public function find($conds = null, $limit = 20, $offset = 0, $desc = true)
     {
         $fields = ['*'];
